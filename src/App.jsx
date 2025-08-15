@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "./App.css";
+
+const API_URL = "http://localhost:5000/api/events";
 
 const ICONS = {
   dash: "📊",
@@ -13,18 +15,6 @@ const ICONS = {
   gallery: "🖼️",
   feedback: "💬",
 };
-
-const MOCK_EVENTS = [
-  { date: "2029-05-02", title: "Vendor Feedback", type: "schedule" },
-  { date: "2029-05-04", title: "Final Event Report", type: "event" },
-  { date: "2029-05-07", title: "Team Check-in", type: "meeting" },
-  { date: "2029-05-10", title: "Stage Setup", type: "setup" },
-  { date: "2029-05-15", title: "Echo Beats Festival", type: "event" },
-  { date: "2029-05-23", title: "Client Review", type: "meeting" },
-  { date: "2029-05-27", title: "Pre-Event Committee", type: "schedule" },
-  { date: "2029-05-30", title: "Gallery Opening", type: "event" },
-];
-
 
 const TYPE_TO_LABEL = {
   schedule: "Schedule",
@@ -101,11 +91,9 @@ function ChipsBar({ stats }) {
           <div className="chip-label">{s.label}</div>
         </div>
       ))}
-      <div className="chip ghost">+ New Agenda</div>
     </div>
   );
 }
-
 
 function MonthHeader({ ym, setYm }) {
   const monthFmt = ym.toLocaleString("en-US", { month: "long", year: "numeric" });
@@ -125,19 +113,22 @@ function MonthHeader({ ym, setYm }) {
       </div>
       <div className="month-actions">
         <button className="seg active">Month</button>
-        <button className="seg">Week</button>
-        <button className="seg">Day</button>
-        <button className="ghost small">+ New Agenda</button>
+        <button className="seg" disabled>Week</button>
+        <button className="seg" disabled>Day</button>
+        <button className="ghost small" onClick={() => {
+          const el = document.getElementById("add-form");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}>+ New Agenda</button>
       </div>
     </div>
   );
 }
 
 function calendarMatrix(year, month) {
-  
+  // Build a 6x7 matrix starting on Sunday
   const first = new Date(year, month, 1);
   const start = new Date(first);
-  const dow = start.getDay(); 
+  const dow = start.getDay(); // 0..6
   start.setDate(1 - dow);
   const cells = [];
   for (let i = 0; i < 42; i++) {
@@ -153,6 +144,7 @@ function Calendar({ ym, events, onSelect }) {
   const month = ym.getMonth();
 
   const cells = useMemo(() => calendarMatrix(year, month), [year, month]);
+
   const evMap = useMemo(() => {
     const m = {};
     events.forEach((e) => {
@@ -185,8 +177,8 @@ function Calendar({ ym, events, onSelect }) {
             >
               <div className="date">{d.getDate()}</div>
               <div className="events">
-                {dayEvents.map((e, idx) => (
-                  <div key={idx} className={`pill ${e.type}`}>
+                {dayEvents.map((e) => (
+                  <div key={e.id} className={`pill ${e.type}`}>
                     <span className="dot" /> {e.title}
                   </div>
                 ))}
@@ -199,21 +191,15 @@ function Calendar({ ym, events, onSelect }) {
   );
 }
 
-function Details({ selected }) {
+function Details({ selected, onDelete }) {
   if (!selected) {
-    return (
-      <div className="details empty-box">
-        Select a date to see details
-      </div>
-    );
+    return <div className="details empty-box">Select a date to see details</div>;
   }
   const { date, events } = selected;
   const pretty = new Date(date).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    weekday: "long", year: "numeric", month: "short", day: "numeric",
   });
+
   return (
     <div className="details">
       <div className="details-title">Schedule Details</div>
@@ -221,13 +207,22 @@ function Details({ selected }) {
       {events.length === 0 ? (
         <div className="muted">No events</div>
       ) : (
-        events.map((e, i) => (
-          <div className="details-card" key={i}>
-            <div className={`badge ${e.type}`}>{TYPE_TO_LABEL[e.type]}</div>
+        events.map((e) => (
+          <div className="details-card" key={e.id}>
+            <div className={`badge ${e.type}`}>{TYPE_TO_LABEL[e.type] ?? "Event"}</div>
             <div className="dc-title">{e.title}</div>
-            <div className="dc-meta">09:00 – 11:00 • Los Angeles, CA</div>
-            <div className="dc-person">Michael Taylor</div>
-            <div className="dc-contact">+1 (000) 000-0000 • michael@example.com</div>
+            <div className="dc-meta">{e.location ? e.location : "—"}</div>
+            {(e.contactName || e.contactEmail || e.contactPhone) && (
+              <>
+                <div className="dc-person">{e.contactName ?? ""}</div>
+                <div className="dc-contact">
+                  {[e.contactPhone, e.contactEmail].filter(Boolean).join(" • ")}
+                </div>
+              </>
+            )}
+            <div className="details-actions">
+              <button className="delete-btn" onClick={() => onDelete(e.id)}>Delete</button>
+            </div>
           </div>
         ))
       )}
@@ -235,21 +230,102 @@ function Details({ selected }) {
   );
 }
 
+function AddEventForm({ onAdd }) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("2029-05-20");
+  const [type, setType] = useState("meeting");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!title || !date) return;
+    const payload = { title, date, type };
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      alert("Kunde inte skapa event");
+      return;
+    }
+    const created = await res.json();
+    onAdd(created);
+    setTitle("");
+  }
+
+  return (
+    <form id="add-form" className="form" onSubmit={handleSubmit}>
+      <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+      <select value={type} onChange={(e) => setType(e.target.value)}>
+        <option value="schedule">Schedule</option>
+        <option value="event">Event</option>
+        <option value="meeting">Meeting</option>
+        <option value="setup">Setup</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+  );
+}
+
 export default function App() {
- 
+  // sätt en månad så den liknar screenshot (maj 2029)
   const [ym, setYm] = useState(new Date(2029, 4, 1));
   const [selected, setSelected] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Hämta events från backend
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        if (mounted) setEvents(data);
+      } catch (e) {
+        console.error("Kunde inte hämta events:", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Stats (för chip-raden)
   const stats = useMemo(() => {
     const counts = { schedule: 0, event: 0, meeting: 0, setup: 0 };
-    MOCK_EVENTS.forEach((e) => (counts[e.type] += 1));
+    events.forEach((e) => {
+      const t = (e.type || "").toLowerCase();
+      if (counts[t] !== undefined) counts[t] += 1;
+    });
     return [
-      { label: "All Schedules", count: Object.values(counts).reduce((a,b)=>a+b,0) },
+      { label: "All Schedules", count: Object.values(counts).reduce((a, b) => a + b, 0) },
       { label: "Event", count: counts.event },
       { label: "Meeting", count: counts.meeting },
       { label: "Setup and Rehearsal", count: counts.setup },
     ];
-  }, []);
+  }, [events]);
+
+  async function handleDelete(id) {
+    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    if (res.status === 204) {
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+      // uppdatera details-panelen om den tittade på den raderade dagen
+      if (selected?.events?.some((e) => e.id === id)) {
+        const remaining = selected.events.filter((e) => e.id !== id);
+        setSelected({ ...selected, events: remaining });
+      }
+    } else if (res.status === 404) {
+      alert("Eventet fanns inte (kanske redan raderat).");
+    } else {
+      alert("Kunde inte radera event.");
+    }
+  }
+
+  function handleAdd(created) {
+    setEvents((prev) => [...prev, created]);
+  }
 
   return (
     <div className="layout">
@@ -258,9 +334,16 @@ export default function App() {
         <Topbar />
         <ChipsBar stats={stats} />
         <MonthHeader ym={ym} setYm={setYm} />
+
+        <AddEventForm onAdd={handleAdd} />
+
         <div className="main-panels">
           <div className="panel">
-            <Calendar ym={ym} events={MOCK_EVENTS} onSelect={setSelected} />
+            {loading ? (
+              <div className="calendar loading">Loading events…</div>
+            ) : (
+              <Calendar ym={ym} events={events} onSelect={setSelected} />
+            )}
             <div className="sub-chips">
               <div className="chip small"><span className="dot schedule" /> Schedule</div>
               <div className="chip small"><span className="dot event" /> Event</div>
@@ -268,25 +351,9 @@ export default function App() {
               <div className="chip small"><span className="dot setup" /> Setup</div>
             </div>
           </div>
-          <Details selected={selected} />
+          <Details selected={selected} onDelete={handleDelete} />
         </div>
       </main>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

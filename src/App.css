@@ -1,11 +1,11 @@
-
+/* ===== Base ===== */
 :root{
   --bg:#f6f7fb;
   --panel:#ffffff;
   --text:#2c2c2c;
   --muted:#778090;
   --line:#e8e9ef;
-  --brand:#a94cf5;      
+  --brand:#a94cf5;
   --brand-weak:#f5eaff;
   --chip:#f3f4f8;
   --pill:#f4ecff;
@@ -19,10 +19,10 @@ body{
   background:var(--bg); color:var(--text);
 }
 
-
+/* ===== Layout ===== */
 .layout{display:grid; grid-template-columns:260px 1fr; height:100%}
 
-
+/* Sidebar */
 .sidebar{
   background:#fff; border-right:1px solid var(--line); display:flex; flex-direction:column; padding:20px 14px; gap:14px;
 }
@@ -45,10 +45,10 @@ body{
 .card-btn{border:none; background:var(--brand); color:#fff; padding:8px 10px; border-radius:8px; cursor:pointer}
 .signout{border:none; background:#f2f3f7; padding:10px 12px; border-radius:10px; cursor:pointer}
 
-
+/* Content */
 .content{display:flex; flex-direction:column; padding:20px; gap:18px}
 
-
+/* Topbar */
 .topbar{display:flex; align-items:center; justify-content:space-between}
 .page-title .crumb{color:var(--muted); font-size:12px}
 .page-title h1{margin:4px 0 0; font-size:22px}
@@ -58,7 +58,7 @@ body{
 .icon-btn{border:1px solid var(--line); background:#fff; border-radius:10px; padding:8px 10px; cursor:pointer}
 .avatar{width:34px; height:34px; border-radius:50%; border:none; background:var(--brand); color:#fff; font-weight:700; cursor:pointer}
 
-
+/* Chips row */
 .chips{display:flex; gap:10px; flex-wrap:wrap}
 .chip{
   background:#fff; border:1px solid var(--line); box-shadow:var(--shadow);
@@ -68,7 +68,7 @@ body{
 .chip.ghost{background:var(--brand); color:#fff; border-color:transparent}
 .chip.small{box-shadow:none; background:#f1f2f7; border-color:transparent; font-size:13px}
 
-
+/* Month header */
 .month-header{display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--line); padding:12px; border-radius:14px}
 .month-title{display:flex; align-items:center; gap:10px; font-weight:700}
 .round{width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:#fff; cursor:pointer}
@@ -77,12 +77,24 @@ body{
 .seg.active{background:var(--brand-weak); border-color:#ead9ff; color:#5a26b3}
 .ghost.small{border:1px dashed #d9c8ff; background:#fbf8ff; color:#5a26b3}
 
+/* Little add form (inline) */
+.form{
+  display:flex; gap:10px; margin:4px 0 8px;
+}
+.form input, .form select, .form button{
+  padding:10px; font-size:14px; border:1px solid #ddd; border-radius:8px;
+}
+.form input:focus, .form select:focus{border-color:#7b61ff; outline:none}
+.form button{background:var(--brand); color:#fff; border:none; cursor:pointer}
+.form button:hover{opacity:.95}
 
+/* Panels */
 .main-panels{display:grid; grid-template-columns:1fr 320px; gap:16px}
 .panel{display:flex; flex-direction:column; gap:10px}
 
-
+/* Calendar */
 .calendar{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px}
+.calendar.loading{display:flex; align-items:center; justify-content:center; min-height:280px; color:var(--muted)}
 .weekday-row{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:6px 6px 8px; color:var(--muted); font-weight:600}
 .weekday{text-align:center; font-size:12px}
 .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
@@ -104,10 +116,10 @@ body{
 .pill.meeting .dot{background:#56c2a0}
 .pill.setup .dot{background:#ffa94d}
 
-
+/* Legend below calendar */
 .sub-chips{display:flex; gap:8px; padding:2px 6px}
 
-
+/* Details panel */
 .details{
   background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px;
 }
@@ -122,8 +134,13 @@ body{
 .badge.setup{background:#fff5ea; border-color:#ffe3c5; color:#b5671a}
 .dc-title{font-weight:700}
 .dc-meta,.dc-person,.dc-contact{font-size:12px; color:#6b7280}
+.details-actions{margin-top:8px; display:flex; gap:8px}
+.delete-btn{
+  background:#dc3545; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;
+}
+.delete-btn:hover{background:#a71d2a}
 
-
+/* Responsiveness */
 @media (max-width:1100px){
   .layout{grid-template-columns:72px 1fr}
   .nav-text{display:none}
@@ -131,13 +148,3 @@ body{
 @media (max-width:860px){
   .main-panels{grid-template-columns:1fr}
 }
-
-
-
-
-
-
-
-
-
-
