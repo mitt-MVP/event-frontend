@@ -7,10 +7,11 @@ export default function App() {
   const [date, setDate] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/events")
-      .then(res => res.json())
-      .then(data => setEvents(data));
-  }, []);
+  fetch("https://event-service-anja.azurewebsites.net/api/events")
+    .then(response => response.json())
+    .then(data => setEvents(data))
+    .catch(error => console.error("Error fetching events:", error));
+}, []);
 
   const addEvent = () => {
     if (!name.trim() || !date) return;
