@@ -125,7 +125,7 @@ function MonthHeader({ ym, setYm }) {
 }
 
 function calendarMatrix(year, month) {
-  // Build a 6x7 matrix starting on Sunday
+ 
   const first = new Date(year, month, 1);
   const start = new Date(first);
   const dow = start.getDay(); // 0..6
@@ -269,13 +269,13 @@ function AddEventForm({ onAdd }) {
 }
 
 export default function App() {
-  // sätt en månad så den liknar screenshot (maj 2029)
+  
   const [ym, setYm] = useState(new Date(2029, 4, 1));
   const [selected, setSelected] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Hämta events från backend
+  
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -292,7 +292,7 @@ export default function App() {
     return () => { mounted = false; };
   }, []);
 
-  // Stats (för chip-raden)
+ 
   const stats = useMemo(() => {
     const counts = { schedule: 0, event: 0, meeting: 0, setup: 0 };
     events.forEach((e) => {
